@@ -1,111 +1,156 @@
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+/* ============================================================
+   THEME SYSTEM
+   Each theme sets these same variable names to different values.
+   The UI always reads var(--acc1), var(--bg1) etc — never
+   hardcoded colours. Switch the data-theme attribute on <html>
+   and every colour changes at once.
+   ============================================================ */
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* --- FROZEN (default) --- */
+:root,
+[data-theme="frozen"] {
+  --bg1: #0A1628;
+  --bg2: #0D1F38;
+  --bg3: #112240;
+  --card: #0F2340;
+  --card2: #132850;
+  --card-border: rgba(148, 210, 255, 0.15);
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  --acc1: #94D2FF;   /* main accent — snowflake blue */
+  --acc2: #BFE8FF;   /* lighter accent — headings */
+  --acc3: #5BB8F5;   /* darker accent — buttons */
+  --gold: #A8D8FF;   /* stats, numbers */
+
+  --text: #E8F4FF;
+  --text-muted: #7BAAC8;
+  --text-hint: #4A7A9B;
+  --shine: rgba(148, 210, 255, 0.07);
+
+  --font-head: 'Cinzel', serif;
+  --font-body: 'Crimson Pro', serif;
+  --font-ui:   'Jost', sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+/* --- TIANA --- */
+[data-theme="tiana"] {
+  --bg1: #0A1A08;
+  --bg2: #0D2210;
+  --bg3: #102614;
+  --card: #0F2312;
+  --card2: #132B16;
+  --card-border: rgba(100, 200, 80, 0.15);
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+  --acc1: #7DC95E;
+  --acc2: #B5E89A;
+  --acc3: #4FA832;
+  --gold: #D4A843;
+
+  --text: #E8F5E0;
+  --text-muted: #7AA868;
+  --text-hint: #4A7A3A;
+  --shine: rgba(125, 201, 94, 0.07);
+
+  --font-head: 'Cinzel', serif;
+  --font-body: 'Crimson Pro', serif;
+  --font-ui:   'Jost', sans-serif;
 }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
+/* --- RAPUNZEL --- */
+[data-theme="rapunzel"] {
+  --bg1: #1A0A2E;
+  --bg2: #221040;
+  --bg3: #2A1450;
+  --card: #221040;
+  --card2: #2C1858;
+  --card-border: rgba(220, 168, 255, 0.15);
+
+  --acc1: #DCA8FF;
+  --acc2: #EDD4FF;
+  --acc3: #B86EF0;
+  --gold: #FFD700;
+
+  --text: #F5E8FF;
+  --text-muted: #A87AC8;
+  --text-hint: #6A4A8A;
+  --shine: rgba(220, 168, 255, 0.07);
+
+  --font-head: 'Cinzel', serif;
+  --font-body: 'Cormorant Garamond', serif;
+  --font-ui:   'Jost', sans-serif;
+}
+
+/* --- CINDERELLA --- */
+[data-theme="cinderella"] {
+  --bg1: #12100A;
+  --bg2: #1A1608;
+  --bg3: #1F1A0A;
+  --card: #1A1608;
+  --card2: #221E0E;
+  --card-border: rgba(255, 215, 100, 0.15);
+
+  --acc1: #FFD764;
+  --acc2: #FFE89A;
+  --acc3: #E8B830;
+  --gold: #FFD764;
+
+  --text: #FFF8E8;
+  --text-muted: #C8A858;
+  --text-hint: #8A6828;
+  --shine: rgba(255, 215, 100, 0.07);
+
+  --font-head: 'Cinzel', serif;
+  --font-body: 'Crimson Pro', serif;
+  --font-ui:   'Jost', sans-serif;
+}
+
+/* ============================================================
+   BASE STYLES
+   ============================================================ */
+*, *::before, *::after {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  margin: 0;
+  background: var(--bg1);
+  color: var(--text);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  overflow-x: hidden;
+  /* smooth transition when theme changes */
+  transition: background 1s ease, color 0.4s ease;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+/* Particle canvas — fixed behind everything */
+#blossom-particles {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;  /* clicks pass through it */
+  z-index: 0;
+  opacity: 0.5;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
+/* All real content sits above the canvas */
+#root > * { position: relative; z-index: 1; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb {
+  background: var(--card-border);
+  border-radius: 2px;
+}
+
+/* Respect reduced motion — removes ALL animations */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
-}
-
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+  #blossom-particles { display: none; }
 }
