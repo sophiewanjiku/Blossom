@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useThemeStore } from './store/index'
 import { initParticles, resizeParticles, destroyParticles } from './animations/particles'
 import Welcome from './pages/Welcome'
+import AuthPage from './pages/Auth/index'
 
 export default function App() {
   const { themeId } = useThemeStore()
@@ -32,8 +33,9 @@ export default function App() {
 
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Welcome />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="/" element={<AuthPage />} />
+          <Route path="/app/*" element={<Dashboard />} />
+        
         </Routes>
       </BrowserRouter>
     </>
