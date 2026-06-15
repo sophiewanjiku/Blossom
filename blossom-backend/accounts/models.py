@@ -10,29 +10,33 @@ THEME_CHOICES = [
 
 class User(AbstractUser):
     """
-    We extend Django's built-in AbstractUser instead of
-    building auth from scratch. AbstractUser already has
-    password hashing, login methods, admin support etc.
-    We just add our custom fields on top.
+    We extend AbstractUser so we keep all of Django's built-in
+    auth logic (password hashing, sessions, admin) and just
+    add our custom fields on top.
     """
+    email    = models.EmailField(unique=True)
+    name     = models.CharField(max_length=120, blank=True)
+    theme    = models.CharField(max_length=20, choices=THEME_CHOICES, default='frozen')
 
-    # Make email the login field instead of username
-    email = models.EmailField(unique=True)
-    name  = models.CharField(max_length=120, blank=True)
-
-    # Which fairytale world this user chose
-    theme = models.CharField(
-        max_length=20,
-        choices=THEME_CHOICES,
-        default='frozen',
-    )
+    # Onboarding fields — all optional so user can skip
+    date_of_birth      = models.DateField(null=True, blank=True)
+    cycle_length       = models.PositiveSmallIntegerField(default=28)
+    last_period_date   = models.DateField(null=True, blank=True)
+    health_conditions  = models.JSONField(default=list, blank=True)
+    # JSONField stores a Python list as JSON in Postgres
+    # e.g. ["PCOS", "Endometriosis"]
 
     onboarding_complete = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
 
-    # This tells Django to use email for login
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username']  # needed for createsuperuser
+    # Email verification
+    email_verified = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    # Tell Django to use email for login instead of username
+    USERNAME_FIELD  = 'email'
+    REQUIRED_FIELDS = ['username']
 
     def __str__(self):
         return self.email
