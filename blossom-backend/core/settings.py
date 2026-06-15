@@ -107,3 +107,16 @@ SIMPLE_JWT = {
 CORS_ALLOWED_ORIGINS = os.getenv(
     'CORS_ALLOWED_ORIGINS', 'http://localhost:5173'
 ).split(',')
+
+# --- EMAIL (prints to console in dev — no SMTP needed) ---
+EMAIL_BACKEND   = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'Blossom <noreply@blossom.app>'
+FRONTEND_URL    = os.getenv('FRONTEND_URL', 'http://localhost:5173')
+
+# --- CACHE (uses Redis for storing verification tokens) ---
+CACHES = {
+    'default': {
+        'BACKEND':  'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': os.getenv('REDIS_URL', 'redis://localhost:6379/0'),
+    }
+}
