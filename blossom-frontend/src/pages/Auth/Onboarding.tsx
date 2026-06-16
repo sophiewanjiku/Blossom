@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { authApi } from '../../lib/api'
 import { useNavigate } from 'react-router-dom'
 import { useThemeStore } from '../../store/index'
 import { THEMES, THEME_ORDER, type ThemeId } from '../../themes/themes'
@@ -37,11 +38,17 @@ export default function Onboarding() {
   }
 
   function finish() {
-    setTheme(chosenTheme)
-    // TODO: PATCH /api/accounts/me/ with all collected data
-    // navigate('/app/tracker')
-    alert(`Profile saved! Theme: ${chosenTheme}. Navigate to /app/tracker here.`)
-  }
+    await authApi.updateOnboarding({
+      date_of_birth:    dob || undefined,
+      cycle_length:     parseInt(cycleLen) || 28,
+      last_period_date: lastPeriod || undefined,
+      health_conditions: conditions,
+      theme:            chosenTheme,
+      onboarding_complete: true,
+    })
+setTheme(chosenTheme)
+navigate('/app/tracker')
+}
 
   // Progress bar — 3 segments
   const ProgressBar = () => (

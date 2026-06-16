@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import FormField from '../../components/ui/FormField'
+import { authApi } from '../../lib/api'
+import { useAuthStore } from '../../store/index'
 
 interface Props {
   onSuccess: () => void
@@ -18,6 +20,10 @@ export default function Signin({ onSuccess, onSignupClick }: Props) {
     if (!password) e.password = 'Password is required'
     setErrors(e)
     if (Object.keys(e).length) return
+
+    const res = await authApi.login({ email, password })
+    useAuthStore.getState().setAuth(res.data.user, res.data.access)
+    onSuccess()
 
     setLoading(true)
     try {

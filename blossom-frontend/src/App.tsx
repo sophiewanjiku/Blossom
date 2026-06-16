@@ -4,6 +4,8 @@ import { useThemeStore } from './store/index'
 import { initParticles, resizeParticles, destroyParticles } from './animations/particles'
 import Welcome from './pages/Welcome'
 import AuthPage from './pages/Auth/index'
+import AuthPage from './pages/Auth/index'
+import Dashboard from './pages/Dashboard/index'
 
 export default function App() {
   const { themeId } = useThemeStore()
@@ -35,6 +37,8 @@ export default function App() {
         <Routes>
           <Route path="/" element={<AuthPage />} />
           <Route path="/app/*" element={<Dashboard />} />
+          <Route path="/"        element={<AuthPage />} />
+          <Route path="/app/*"   element={<Dashboard />} />
         
         </Routes>
       </BrowserRouter>

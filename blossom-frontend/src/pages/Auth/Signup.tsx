@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import FormField from '../../components/ui/FormField'
 import PasswordStrength from '../../components/ui/PasswordStrength'
+import { authApi } from '../../lib/api'
+import { useAuthStore } from '../../store/index'
 
 interface Props {
   onSuccess: (email: string) => void
@@ -52,13 +54,15 @@ export default function Signup({ onSuccess, onSigninClick }: Props) {
 
     setLoading(true)
     try {
-      // TODO: replace with real API call in Backend Part 2
-      // const res = await authApi.register({ email, name: firstName + ' ' + lastName, password })
-      // useAuthStore.getState().setAuth(res.data.user, res.data.access)
-
-      // Simulating network delay for now
-      await new Promise(r => setTimeout(r, 1200))
-      onSuccess(email)
+     
+      const res = await authApi.register({
+      email,
+      name: `${firstName} ${lastName}`.trim(),
+      password,
+      password2,
+    })
+    useAuthStore.getState().setAuth(res.data.user, res.data.access)
+    onSuccess(email)
     } catch (err: unknown) {
       // Handle API errors — e.g. email already taken
       const apiError = err as { response?: { data?: { email?: string[] } } }
