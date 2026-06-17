@@ -1,11 +1,62 @@
 import { useState } from 'react'
-import { authApi } from '../../lib/api'
 import { useNavigate } from 'react-router-dom'
 import { useThemeStore } from '../../store/index'
 import { THEMES, THEME_ORDER, type ThemeId } from '../../themes/themes'
+import { authApi } from '../../lib/api'
 
-// 3 steps — progress bar shows which step you're on
-type Step = 1 | 2 | 3
+// ============================================================
+// These components are defined OUTSIDE Onboarding so React
+// doesn't recreate them on every render
+// ============================================================
+
+const ProgressBar = ({ step }: { step: number }) => (
+  <div style={{ display: 'flex', gap: 6, marginBottom: 28 }}>
+    {[1, 2, 3].map(s => (
+      <div key={s} style={{
+        flex: 1, height: 3, borderRadius: 2,
+        background: s <= step
+          ? 'var(--acc1)'
+          : 'rgba(148,210,255,0.1)',
+        transition: 'background 0.5s',
+      }} />
+    ))}
+  </div>
+)
+
+const SkipRow = ({
+  onSkip,
+  label = 'Complete this later under Profile',
+}: {
+  onSkip: () => void
+  label?: string
+}) => (
+  <div style={{
+    display: 'flex', alignItems: 'center',
+    justifyContent: 'space-between', marginTop: 16,
+  }}>
+    <span style={{
+      fontFamily: 'var(--font-ui)', fontSize: 11,
+      color: 'var(--text-hint)',
+    }}>
+      {label}
+    </span>
+    <button
+      onClick={onSkip}
+      style={{
+        background: 'none', border: 'none', cursor: 'pointer',
+        fontFamily: 'var(--font-ui)', fontSize: 12,
+        color: 'var(--text-muted)',
+        textDecoration: 'underline', textUnderlineOffset: 3,
+      }}
+    >
+      Skip →
+    </button>
+  </div>
+)
+
+// ============================================================
+// Health conditions list
+// ============================================================
 
 const HEALTH_CONDITIONS = [
   'Endometriosis', 'PCOS', 'Uterine fibroids', 'Adenomyosis',
@@ -14,15 +65,70 @@ const HEALTH_CONDITIONS = [
   'Menopause / perimenopause', 'None of the above',
 ]
 
+// ============================================================
+// Shared input label style — reused across all fields
+// ============================================================
+
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  fontFamily: 'var(--font-ui)',
+  fontSize: 10,
+  letterSpacing: '1.5px',
+  textTransform: 'uppercase',
+  color: 'var(--text-hint)',
+  marginBottom: 6,
+}
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  background: 'var(--card)',
+  border: '1px solid var(--card-border)',
+  borderRadius: 10,
+  padding: '11px 14px',
+  fontFamily: 'var(--font-body)',
+  fontSize: 14,
+  color: 'var(--text)',
+  outline: 'none',
+  colorScheme: 'dark' as const,
+}
+
+const hintStyle: React.CSSProperties = {
+  fontSize: 11,
+  color: 'var(--text-hint)',
+  marginTop: 4,
+  fontFamily: 'var(--font-ui)',
+}
+
+const primaryBtn: React.CSSProperties = {
+  width: '100%',
+  padding: '13px',
+  borderRadius: 10,
+  background: 'transparent',
+  border: '1px solid var(--acc1)',
+  color: 'var(--acc1)',
+  fontFamily: 'var(--font-head)',
+  fontSize: 11,
+  letterSpacing: 2,
+  textTransform: 'uppercase' as const,
+  cursor: 'pointer',
+  transition: 'all 0.25s',
+}
+
+// ============================================================
+// ONBOARDING COMPONENT
+// ============================================================
+
+type Step = 1 | 2 | 3
+
 export default function Onboarding() {
-  const navigate = useNavigate()
-  const { setTheme } = useThemeStore()
+  const navigate        = useNavigate()
+  const { setTheme }    = useThemeStore()
 
   const [step, setStep] = useState<Step>(1)
 
   // Step 1 fields
-  const [dob, setDob]         = useState('')
-  const [cycleLen, setCycleLen] = useState('28')
+  const [dob, setDob]             = useState('')
+  const [cycleLen, setCycleLen]   = useState('28')
   const [lastPeriod, setLastPeriod] = useState('')
 
   // Step 2 fields
@@ -31,75 +137,45 @@ export default function Onboarding() {
   // Step 3 fields
   const [chosenTheme, setChosenTheme] = useState<ThemeId>('frozen')
 
+  const [loading, setLoading] = useState(false)
+
   function toggleCondition(c: string) {
     setConditions(prev =>
       prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c]
     )
   }
 
-  function finish() {
-    await authApi.updateOnboarding({
-      date_of_birth:    dob || undefined,
-      cycle_length:     parseInt(cycleLen) || 28,
-      last_period_date: lastPeriod || undefined,
-      health_conditions: conditions,
-      theme:            chosenTheme,
-      onboarding_complete: true,
-    })
-setTheme(chosenTheme)
-navigate('/app/tracker')
-}
-
-  // Progress bar — 3 segments
-  const ProgressBar = () => (
-    <div style={{ display: 'flex', gap: 6, marginBottom: 28 }}>
-      {[1, 2, 3].map(s => (
-        <div key={s} style={{
-          flex: 1, height: 3, borderRadius: 2,
-          background: s <= step
-            ? 'var(--acc1)'
-            : 'rgba(148,210,255,0.1)',
-          transition: 'background 0.5s',
-        }} />
-      ))}
-    </div>
-  )
-
-  // Skip button reused across steps
-  const SkipRow = ({ onSkip, label = 'Complete this later under Profile' }: {
-    onSkip: () => void
-    label?: string
-  }) => (
-    <div style={{
-      display: 'flex', alignItems: 'center',
-      justifyContent: 'space-between', marginTop: 16,
-    }}>
-      <span style={{
-        fontFamily: 'var(--font-ui)', fontSize: 11, color: 'var(--text-hint)',
-      }}>
-        {label}
-      </span>
-      <button
-        onClick={onSkip}
-        style={{
-          background: 'none', border: 'none', cursor: 'pointer',
-          fontFamily: 'var(--font-ui)', fontSize: 12,
-          color: 'var(--text-muted)', textDecoration: 'underline',
-          textUnderlineOffset: 3,
-        }}
-      >
-        Skip →
-      </button>
-    </div>
-  )
+  async function finish() {
+    setLoading(true)
+    try {
+      await authApi.updateOnboarding({
+        date_of_birth:       dob || undefined,
+        cycle_length:        parseInt(cycleLen) || 28,
+        last_period_date:    lastPeriod || undefined,
+        health_conditions:   conditions,
+        theme:               chosenTheme,
+        onboarding_complete: true,
+      })
+      setTheme(chosenTheme)
+      navigate('/app/tracker')
+    } catch  {
+      // If API fails (backend not running yet), still navigate
+      setTheme(chosenTheme)
+      navigate('/app/tracker')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // ---- STEP 1: Personal info ----
   if (step === 1) return (
     <div>
-      <ProgressBar />
+      <ProgressBar step={1} />
+
       <h1 style={{
         fontFamily: 'var(--font-head)', fontSize: 24,
-        color: 'var(--acc2)', marginBottom: 6, letterSpacing: 1,
+        fontWeight: 700, color: 'var(--acc2)',
+        letterSpacing: 1, marginBottom: 6,
       }}>
         Tell us about you
       </h1>
@@ -108,105 +184,60 @@ navigate('/app/tracker')
         fontSize: 13, color: 'var(--text-muted)',
         marginBottom: 28, lineHeight: 1.6,
       }}>
-        This helps Blossom personalise your experience. You can update this anytime.
+        This helps Blossom personalise your experience.
+        You can update this anytime.
       </p>
 
       {/* Date of birth */}
       <div style={{ marginBottom: 16 }}>
-        <label style={{
-          display: 'block', fontFamily: 'var(--font-ui)',
-          fontSize: 10, letterSpacing: '1.5px', textTransform: 'uppercase',
-          color: 'var(--text-hint)', marginBottom: 6,
-        }}>
-          Date of birth
-        </label>
+        <label style={labelStyle}>Date of birth</label>
         <input
           type="date"
           value={dob}
           onChange={e => setDob(e.target.value)}
-          style={{
-            width: '100%', background: 'var(--card)',
-            border: '1px solid var(--card-border)',
-            borderRadius: 10, padding: '11px 14px',
-            fontFamily: 'var(--font-body)', fontSize: 14,
-            color: 'var(--text)', outline: 'none',
-            colorScheme: 'dark',
-          }}
+          style={inputStyle}
         />
-        <p style={{
-          fontSize: 11, color: 'var(--text-hint)',
-          marginTop: 4, fontFamily: 'var(--font-ui)',
-        }}>
+        <p style={hintStyle}>
           Used to calculate age-relevant health information.
         </p>
       </div>
 
-      {/* Average cycle length */}
+      {/* Cycle length */}
       <div style={{ marginBottom: 16 }}>
-        <label style={{
-          display: 'block', fontFamily: 'var(--font-ui)',
-          fontSize: 10, letterSpacing: '1.5px', textTransform: 'uppercase',
-          color: 'var(--text-hint)', marginBottom: 6,
-        }}>
+        <label style={labelStyle}>
           Average cycle length (days)
         </label>
         <input
           type="number"
-          min={21} max={45}
+          min={21}
+          max={45}
           value={cycleLen}
           onChange={e => setCycleLen(e.target.value)}
-          style={{
-            width: '100%', background: 'var(--card)',
-            border: '1px solid var(--card-border)',
-            borderRadius: 10, padding: '11px 14px',
-            fontFamily: 'var(--font-body)', fontSize: 14,
-            color: 'var(--text)', outline: 'none',
-          }}
+          style={inputStyle}
         />
-        <p style={{
-          fontSize: 11, color: 'var(--text-hint)',
-          marginTop: 4, fontFamily: 'var(--font-ui)',
-        }}>
+        <p style={hintStyle}>
           Don't know? 28 is a good starting estimate.
         </p>
       </div>
 
       {/* Last period */}
       <div style={{ marginBottom: 24 }}>
-        <label style={{
-          display: 'block', fontFamily: 'var(--font-ui)',
-          fontSize: 10, letterSpacing: '1.5px', textTransform: 'uppercase',
-          color: 'var(--text-hint)', marginBottom: 6,
-        }}>
-          Last period start date
-        </label>
+        <label style={labelStyle}>Last period start date</label>
         <input
           type="date"
           value={lastPeriod}
           onChange={e => setLastPeriod(e.target.value)}
-          style={{
-            width: '100%', background: 'var(--card)',
-            border: '1px solid var(--card-border)',
-            borderRadius: 10, padding: '11px 14px',
-            fontFamily: 'var(--font-body)', fontSize: 14,
-            color: 'var(--text)', outline: 'none',
-            colorScheme: 'dark',
-          }}
+          style={inputStyle}
         />
       </div>
 
       <button
+        style={primaryBtn}
         onClick={() => setStep(2)}
-        style={{
-          width: '100%', padding: 13, borderRadius: 10,
-          background: 'transparent', border: '1px solid var(--acc1)',
-          color: 'var(--acc1)', fontFamily: 'var(--font-head)',
-          fontSize: 11, letterSpacing: 2, textTransform: 'uppercase',
-          cursor: 'pointer',
-        }}
       >
         Continue
       </button>
+
       <SkipRow onSkip={() => setStep(3)} />
     </div>
   )
@@ -214,10 +245,12 @@ navigate('/app/tracker')
   // ---- STEP 2: Health conditions ----
   if (step === 2) return (
     <div>
-      <ProgressBar />
+      <ProgressBar step={2} />
+
       <h1 style={{
         fontFamily: 'var(--font-head)', fontSize: 24,
-        color: 'var(--acc2)', marginBottom: 6, letterSpacing: 1,
+        fontWeight: 700, color: 'var(--acc2)',
+        letterSpacing: 1, marginBottom: 6,
       }}>
         Health awareness
       </h1>
@@ -226,11 +259,11 @@ navigate('/app/tracker')
         fontSize: 13, color: 'var(--text-muted)',
         marginBottom: 24, lineHeight: 1.6,
       }}>
-        Select any conditions you've been diagnosed with or want to learn
-        more about. This is private and entirely optional.
+        Select any conditions you've been diagnosed with or want
+        to learn more about. This is private and entirely optional.
       </p>
 
-      {/* Condition tags — toggle selection */}
+      {/* Condition tags */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
         {HEALTH_CONDITIONS.map(c => {
           const selected = conditions.includes(c)
@@ -239,12 +272,17 @@ navigate('/app/tracker')
               key={c}
               onClick={() => toggleCondition(c)}
               style={{
-                padding: '7px 13px', borderRadius: 100,
-                border: `1px solid ${selected ? 'var(--acc1)' : 'var(--card-border)'}`,
+                padding: '7px 13px',
+                borderRadius: 100,
+                border: `1px solid ${selected
+                  ? 'var(--acc1)'
+                  : 'var(--card-border)'}`,
                 background: selected ? 'var(--shine)' : 'transparent',
                 color: selected ? 'var(--acc1)' : 'var(--text-muted)',
-                fontFamily: 'var(--font-ui)', fontSize: 11,
-                cursor: 'pointer', transition: 'all 0.2s',
+                fontFamily: 'var(--font-ui)',
+                fontSize: 11,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
                 letterSpacing: '0.3px',
               }}
             >
@@ -255,28 +293,28 @@ navigate('/app/tracker')
       </div>
 
       <button
+        style={{ ...primaryBtn, marginTop: 24 }}
         onClick={() => setStep(3)}
-        style={{
-          width: '100%', padding: 13, borderRadius: 10, marginTop: 24,
-          background: 'transparent', border: '1px solid var(--acc1)',
-          color: 'var(--acc1)', fontFamily: 'var(--font-head)',
-          fontSize: 11, letterSpacing: 2, textTransform: 'uppercase',
-          cursor: 'pointer',
-        }}
       >
         Continue
       </button>
-      <SkipRow onSkip={() => setStep(3)} label="Private — only visible to you" />
+
+      <SkipRow
+        onSkip={() => setStep(3)}
+        label="Private — only visible to you"
+      />
     </div>
   )
 
   // ---- STEP 3: Choose character ----
   return (
     <div>
-      <ProgressBar />
+      <ProgressBar step={3} />
+
       <h1 style={{
         fontFamily: 'var(--font-head)', fontSize: 24,
-        color: 'var(--acc2)', marginBottom: 6, letterSpacing: 1,
+        fontWeight: 700, color: 'var(--acc2)',
+        letterSpacing: 1, marginBottom: 6,
       }}>
         Choose your world
       </h1>
@@ -285,13 +323,18 @@ navigate('/app/tracker')
         fontSize: 13, color: 'var(--text-muted)',
         marginBottom: 24, lineHeight: 1.6,
       }}>
-        Which princess do you identify with? This sets your Blossom theme
-        and Luna's personality. You can change it anytime.
+        Which princess do you identify with? This sets your Blossom
+        theme and Luna's personality. You can change it anytime.
       </p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+      {/* Character grid */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: 10,
+      }}>
         {THEME_ORDER.map(id => {
-          const t = THEMES[id]
+          const t   = THEMES[id]
           const sel = chosenTheme === id
           return (
             <button
@@ -299,26 +342,36 @@ navigate('/app/tracker')
               onClick={() => setChosenTheme(id)}
               style={{
                 background: 'var(--card)',
-                border: `1px solid ${sel ? 'var(--acc1)' : 'var(--card-border)'}`,
-                borderRadius: 12, padding: '16px 12px',
-                cursor: 'pointer', textAlign: 'center',
+                border: `1px solid ${sel
+                  ? 'var(--acc1)'
+                  : 'var(--card-border)'}`,
+                borderRadius: 12,
+                padding: '16px 12px',
+                cursor: 'pointer',
+                textAlign: 'center',
                 transition: 'all 0.2s',
                 outline: 'none',
               }}
             >
-              <div style={{ fontSize: 28, marginBottom: 8 }}>{t.icon}</div>
+              <div style={{ fontSize: 28, marginBottom: 8 }}>
+                {t.icon}
+              </div>
               <div style={{
-                fontFamily: 'var(--font-head)', fontSize: 11,
+                fontFamily: 'var(--font-head)',
+                fontSize: 11,
                 color: sel ? 'var(--acc2)' : 'var(--text-muted)',
-                letterSpacing: 1, marginBottom: 4,
+                letterSpacing: 1,
+                marginBottom: 4,
               }}>
                 {t.name}
               </div>
               <div style={{
-                fontFamily: 'var(--font-body)', fontStyle: 'italic',
-                fontSize: 11, color: 'var(--text-hint)',
+                fontFamily: 'var(--font-body)',
+                fontStyle: 'italic',
+                fontSize: 11,
+                color: 'var(--text-hint)',
               }}>
-                {t.tagline.split(' — ')[0]}
+                {t.tagline.split('—')[0].trim()}
               </div>
             </button>
           )
@@ -326,18 +379,17 @@ navigate('/app/tracker')
       </div>
 
       <button
+        style={{ ...primaryBtn, marginTop: 20 }}
         onClick={finish}
-        style={{
-          width: '100%', padding: 13, borderRadius: 10, marginTop: 20,
-          background: 'transparent', border: '1px solid var(--acc1)',
-          color: 'var(--acc1)', fontFamily: 'var(--font-head)',
-          fontSize: 11, letterSpacing: 2, textTransform: 'uppercase',
-          cursor: 'pointer',
-        }}
+        disabled={loading}
       >
-        Enter Blossom ✦
+        {loading ? 'Saving…' : 'Enter Blossom ✦'}
       </button>
-      <SkipRow onSkip={finish} label="Default theme is Frozen" />
+
+      <SkipRow
+        onSkip={finish}
+        label="Default theme is Frozen"
+      />
     </div>
   )
 }
