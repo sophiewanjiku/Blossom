@@ -5,22 +5,12 @@ import Signin from './Signin'
 import VerifyEmail from './VerifyEmail'
 import Onboarding from './Onboarding'
 
-// These are all the possible screens in the auth flow.
-// A "state machine" is just a variable that controls
-// which screen is visible at any moment.
-type AuthScreen =
-  | 'signup'
-  | 'verify-email'
-  | 'signin'
-  | 'onboarding'
+type AuthScreen = 'signup' | 'verify-email' | 'signin' | 'onboarding'
 
 export default function AuthPage() {
-  const [screen, setScreen] = useState<AuthScreen>('signup')
+  const [screen, setScreen]       = useState<AuthScreen>('signup')
   const [signupEmail, setSignupEmail] = useState('')
 
-  // This function is passed down to child components so they
-  // can trigger a screen change. This is called "lifting state up" —
-  // the parent owns the state, children just call the setter.
   const go = (s: AuthScreen) => setScreen(s)
 
   return (
