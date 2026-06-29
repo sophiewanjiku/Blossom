@@ -1,5 +1,5 @@
 from django.apps import AppConfig
 
-class CyclesConfig(AppConfig):
+class AiConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'cycles'
+    name = 'ai'

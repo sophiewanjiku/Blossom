@@ -26,6 +26,9 @@ INSTALLED_APPS = [
 
     # Our apps
     'accounts',
+    'cycles',    
+    'health',
+    'ai',
 ]
 
 MIDDLEWARE = [
