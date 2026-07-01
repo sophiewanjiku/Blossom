@@ -40,23 +40,37 @@ export const authApi = {
     theme?: string
   }) => api.post('/api/accounts/register/', data),
 
-  login: (data: { email: string; password: string }) =>
-    api.post('/api/accounts/login/', data),
+  login: (data: {
+    email: string
+    password: string
+  }) => api.post('/api/accounts/login/', data),
+
+  verifyEmail: (token: string) =>
+    api.get(`/api/accounts/verify-email/?token=${token}`),
+
+  resendVerification: () =>
+    api.post('/api/accounts/resend-verification/'),
+
+  forgotPassword: (email: string) =>
+    api.post('/api/accounts/forgot-password/', { email }),
+
+  resetPassword: (data: {
+    token: string
+    password: string
+    password2: string
+  }) => api.post('/api/accounts/reset-password/', data),
 
   getProfile: () =>
     api.get('/api/accounts/me/'),
 
   updateOnboarding: (data: {
-    date_of_birth?: string
-    cycle_length?: number
-    last_period_date?: string
-    health_conditions?: string[]
-    theme?: string
+    date_of_birth?:       string
+    cycle_length?:        number
+    last_period_date?:    string
+    health_conditions?:   string[]
+    theme?:               string
     onboarding_complete?: boolean
   }) => api.patch('/api/accounts/onboarding/', data),
-
-  resendVerification: () =>
-    api.post('/api/accounts/resend-verification/'),
 }
 
 export const cycleApi = {

@@ -4,16 +4,14 @@ import { useThemeStore, useAuthStore } from './store/index'
 import { initParticles, resizeParticles, destroyParticles } from './animations/particles'
 import AuthPage from './pages/Auth/index'
 import Dashboard from './pages/Dashboard/index'
+import ResetPassword from './pages/Auth/ResetPassword'
 
-// ProtectedRoute — if not logged in, redirect to /
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore()
   if (!isAuthenticated) return <Navigate to="/" replace />
   return <>{children}</>
 }
 
-// PublicRoute — if already logged in, redirect to /app
-// so user never sees the auth page again
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore()
   if (isAuthenticated) return <Navigate to="/app" replace />
@@ -26,10 +24,8 @@ export default function App() {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', themeId)
     initParticles(themeId)
-
     const onResize = () => resizeParticles()
     window.addEventListener('resize', onResize)
-
     return () => {
       window.removeEventListener('resize', onResize)
       destroyParticles()
@@ -39,10 +35,8 @@ export default function App() {
   return (
     <>
       <canvas id="blossom-particles" aria-hidden="true" />
-
       <BrowserRouter>
         <Routes>
-          {/* Auth — logged-in users skip this entirely */}
           <Route
             path="/"
             element={
@@ -52,7 +46,11 @@ export default function App() {
             }
           />
 
-          {/* Dashboard — only accessible when logged in */}
+          {/* These two routes work WITHOUT being logged in
+              because the user clicks them from their email */}
+          <Route path="/verify-email"   element={<AuthPage />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+
           <Route
             path="/app"
             element={
@@ -62,7 +60,6 @@ export default function App() {
             }
           />
 
-          {/* Catch all */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
