@@ -58,3 +58,29 @@ export const authApi = {
   resendVerification: () =>
     api.post('/api/accounts/resend-verification/'),
 }
+
+export const cycleApi = {
+  getProfile: () =>
+    api.get('/api/cycles/profile/'),
+
+  updateProfile: (data: object) =>
+    api.patch('/api/cycles/profile/', data),
+
+  getPrediction: () =>
+    api.get('/api/cycles/prediction/'),
+
+  getCalendar: (year: number, month: number) =>
+    api.get('/api/cycles/calendar/', { params: { year, month } }),
+
+  getLogs: (year?: number, month?: number) =>
+    api.get('/api/cycles/logs/', { params: { year, month } }),
+
+  createLog: (data: object) =>
+    api.post('/api/cycles/logs/', data),
+
+  updateLog: (id: number, data: object) =>
+    api.patch(`/api/cycles/logs/${id}/`, data),
+
+  startPeriod: (flow = 'medium') =>
+    api.post('/api/cycles/start-period/', { flow }),
+}

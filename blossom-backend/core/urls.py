@@ -22,4 +22,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/accounts/', include('accounts.urls')),
     path('api/accounts/token/refresh/', TokenRefreshView.as_view()),
+    path('api/cycles/',  include('cycles.urls')),   # ← make sure this exists
+    path('api/health/',  include('health.urls')),
+    path('api/ai/',      include('ai.urls')),
 ]

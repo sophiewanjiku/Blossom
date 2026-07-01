@@ -14,22 +14,19 @@ from .serializers import (
 from .algorithm import predict_cycle, predict_cycle_from_history, get_calendar_month
 
 
-def get_or_create_profile(user) -> CycleProfile:
-    """
-    Helper — gets the user's cycle profile, creating one
-    with defaults if it doesn't exist yet.
-    get_or_create returns a tuple (object, created)
-    so we unpack with [0] to get just the object.
-    """
-    profile, _ = CycleProfile.objects.get_or_create(user=user)
+def get_or_create_profile(user):
+    profile, _ = CycleProfile.objects.get_or_create(
+        user=user,
+        defaults={
+            'average_cycle_length':  28,
+            'average_period_length': 5,
+        }
+    )
     return profile
 
 
 class CycleProfileView(generics.RetrieveUpdateAPIView):
-    """
-    GET  /api/cycles/profile/  — get cycle settings
-    PATCH /api/cycles/profile/ — update cycle settings
-    """
+    """GET + PATCH /api/cycles/profile/"""
     serializer_class   = CycleProfileSerializer
     permission_classes = [IsAuthenticated]
 
@@ -38,38 +35,42 @@ class CycleProfileView(generics.RetrieveUpdateAPIView):
 
 
 class PredictionView(APIView):
-    """
-    GET /api/cycles/prediction/
-
-    The main algorithm endpoint.
-    Returns everything the dashboard needs:
-    current day, phase, next period, fertile window etc.
-    """
+    """GET /api/cycles/prediction/"""
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         profile = get_or_create_profile(request.user)
 
+        # If no last_period_date set, return a safe default
+        # so the frontend doesn't crash
         if not profile.last_period_date:
-            return Response(
-                {'detail': 'Please set your last period date first.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({
+                'current_day':       1,
+                'total_days':        28,
+                'phase':             'menstrual',
+                'phase_name':        'Menstrual Phase',
+                'phase_day':         1,
+                'days_until_period': 28,
+                'next_period_date':  None,
+                'ovulation_date':    None,
+                'fertile_start':     None,
+                'fertile_end':       None,
+                'is_fertile_now':    False,
+                'cycle_length':      28,
+                'period_length':     5,
+                'no_data':           True,
+            })
 
-        # Get all logged period dates from history
-        # for the smarter multi-cycle prediction
+        # Use history if available, otherwise use profile settings
         period_dates = list(
             DailyLog.objects
             .filter(user=request.user)
             .exclude(flow='none')
             .exclude(flow='')
-            # Get the first day of each period cluster
             .values_list('date', flat=True)
             .order_by('date')
         )
 
-        # Use history-based prediction if we have data,
-        # otherwise fall back to profile settings
         if len(period_dates) >= 2:
             prediction = predict_cycle_from_history(
                 period_dates=period_dates,
@@ -87,26 +88,15 @@ class PredictionView(APIView):
 
 
 class CalendarView(APIView):
-    """
-    GET /api/cycles/calendar/?year=2026&month=6
-
-    Returns all days in a month tagged with their type
-    (period, fertile, ovulation, predicted, normal).
-    The frontend calendar reads this directly.
-    """
+    """GET /api/cycles/calendar/?year=2026&month=6"""
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         profile = get_or_create_profile(request.user)
 
         if not profile.last_period_date:
-            return Response(
-                {'detail': 'Please set your last period date first.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response([])  # empty calendar until data exists
 
-        # Read month and year from query params
-        # Default to current month if not provided
         today = date.today()
         try:
             year  = int(request.query_params.get('year',  today.year))
@@ -130,83 +120,54 @@ class CalendarView(APIView):
 
 
 class DailyLogListCreateView(generics.ListCreateAPIView):
-    """
-    GET  /api/cycles/logs/         — list all logs
-    GET  /api/cycles/logs/?month=6&year=2026 — filtered
-    POST /api/cycles/logs/         — create a log
-    """
+    """GET + POST /api/cycles/logs/"""
     serializer_class   = DailyLogSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        qs = DailyLog.objects.filter(user=self.request.user)
-
-        # Optional month/year filter
+        qs    = DailyLog.objects.filter(user=self.request.user)
         month = self.request.query_params.get('month')
         year  = self.request.query_params.get('year')
-
         if month and year:
             qs = qs.filter(
                 date__month=int(month),
                 date__year=int(year),
             )
-
         return qs
 
     def perform_create(self, serializer):
-        # Automatically attach the logged-in user
         serializer.save(user=self.request.user)
 
 
 class DailyLogDetailView(generics.RetrieveUpdateDestroyAPIView):
-    """
-    GET    /api/cycles/logs/<id>/  — get one log
-    PATCH  /api/cycles/logs/<id>/  — update a log
-    DELETE /api/cycles/logs/<id>/  — delete a log
-    """
+    """GET + PATCH + DELETE /api/cycles/logs/<id>/"""
     serializer_class   = DailyLogSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        # Users can only access their own logs
         return DailyLog.objects.filter(user=self.request.user)
 
 
 class StartPeriodView(APIView):
-    """
-    POST /api/cycles/start-period/
-
-    Called when the user taps "Track today" on the dashboard.
-    Creates a log for today with flow=medium and updates
-    the cycle profile's last_period_date.
-    """
+    """POST /api/cycles/start-period/"""
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
         today   = date.today()
         profile = get_or_create_profile(request.user)
 
-        # Create or update today's log
         log, created = DailyLog.objects.update_or_create(
             user=request.user,
             date=today,
-            defaults={
-                'flow': request.data.get('flow', 'medium'),
-            }
+            defaults={'flow': request.data.get('flow', 'medium')}
         )
 
-        # Update the last period date on the profile
-        # Only update if today is earlier than existing date
-        # or no date is set yet
-        if (
-            not profile.last_period_date
-            or today < profile.last_period_date
-            or (today - profile.last_period_date).days <= 1
-        ):
+        # Update last period date on profile
+        if not profile.last_period_date or today <= profile.last_period_date:
             profile.last_period_date = today
             profile.save(update_fields=['last_period_date'])
 
         return Response({
             'log':     DailyLogSerializer(log).data,
-            'message': 'Period logged successfully.',
+            'message': 'Logged successfully.',
         }, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
